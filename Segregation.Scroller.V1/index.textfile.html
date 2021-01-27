@@ -1,0 +1,235 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <script src="d3.js"></script>
+    <script src = 'https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.25.6/d3-legend.min.js'></script>
+
+
+    <title>With-In School Segregation in PS33</title>
+</head>
+
+
+<body>
+    <!-- <div id="info">
+        a
+    </div> -->
+    <!-- <img src="https://github.com/cuthchow/college-majors-visualisation/blob/master/preview.png" alt=""> -->
+    <div id="tooltip"></div>
+    <div id="graphic">
+        <div id="sections">
+            <section class="step">
+                <div class="title"></div>
+                <br><br>
+                <h1>Within-School Segregation in a NYC DOE school</h1>
+                <p>By <a href = 'http://margrady.com'>MarGrady Research</a></p>
+                <p>
+            
+                    PS 33 in Manhattan is a racially diverse school, even more diverse than the New York City’s District 2, which it is a part of. At PS 33 in 2019-20, 28% of students were Hispanic or Latino, 24% of students were Asian, 21% of students were White, 17% of students were Black or African American, and 9% of students were from another racial or ethnic group or were multi-racial.<br><br>
+
+
+                (Data was provided by NYC DOE)
+                </p>
+                
+            </section>
+            <section class="step">
+                <p>
+                    In the graphic to the right, each circle represents one of the 88 first graders enrolled at PS 33 in 2019-20 (excluding five students who were in multi-grade special education classes). Like the school as a whole, the first grade at PS 33 was very diverse.
+
+
+                <svg id = 'legend' width = '400px' height = '450px'></svg><br><br>
+                </p>
+                
+            </section>
+            <section class = 'step'>
+                <p>
+                However, when we sort students into their classes, we see substantial segregation by race. Two classes have mostly Black and Hispanic students, while two classes have mostly Asian and White students. 
+
+                <svg id = 'legend3' width = '400px' height = '450px'></svg><br><br>
+            </p>
+            </section>
+            <section class="step">
+                <p>
+                    If we color code students based on their economic status, we see that most of the economically disadvantaged students are in the first two classes. The average student is in a class that is 34 percentage points away from the grade-wide average for percent economically disadvantaged.
+
+                    Note: Economic status is based on the NYCDOE’s poverty flag. 
+                    
+                    <!-- Students who are eligible for free or reduced-price lunch or have been identified by the Human Resources Administration (HRA) as receiving certain types of public assistance are considered to be economically disadvantaged.
+                     -->
+                </p>
+
+                <h3>Economic Segregation Index</h3>
+                <table>
+                <tr>
+                    <th>Classes</th>
+                    <th>Percent Economic Disadvantaged by Class</th>
+                    <th>Percent Difference Economic Disadvantage</th>
+                </tr>
+
+                <tr>
+                    <td>Class A</td>
+                    <td>72.2%</td>
+                    <td>38.2%</td>
+                </tr>
+
+                <tr>
+                    <td>Class B</td>
+                    <td>70.0%</td>
+                    <td>35.9%</td>
+                </tr>
+
+                <tr>
+                    <td>Class C</td>
+                    <td>3.8%</td>
+                    <td>30.1%</td>
+                </tr>
+
+                <tr>
+                    <td>Class D</td>
+                    <td>8.3%</td>
+                    <td>25.6%</td>
+                </tr>
+
+                <tr>
+                    <td><b>Grade</b></td>
+                    <td><b>37.6%</b></td>
+                    <td><b>34.0%</b></td>
+                
+                </tr>
+
+            </table>
+            <svg id = 'legend2' width = '400px' height = '450px'></svg><br><br>
+            </section>
+            <section class="step">
+    
+                <p>
+                    If we were to randomly assign students to classes, we would expect a more even distribution of students by economic status. In this simulation, the average first grader is in a class that is 9.3 percentage points away from the grade-wide average for percent economically disadvantaged.
+ 
+                </p>
+                 
+                <table>
+                    <tr>
+                        <th>Classes</th>
+                        <th>Percent Economic Disadvantaged by Class</th>
+                        <th>Percent Difference Economic Disadvantage</th>
+                    </tr>
+    
+                    <tr>
+                        <td>Class A</td>
+                        <td>44.4%</td>
+                        <td>6.8%</td>
+                    </tr>
+    
+                    <tr>
+                        <td>Class B</td>
+                        <td>35.0%</td>
+                        <td>2.6%</td>
+                    </tr>
+    
+                    <tr>
+                        <td>Class C</td>
+                        <td>30.8%</td>
+                        <td>6.9%</td>
+                    </tr>
+    
+                    <tr>
+                        <td>Class D</td>
+                        <td>29.2%</td>
+                        <td>8.5%</td>
+                    </tr>
+    
+                    <tr>
+                        <td><b>Grade</b></td>
+                        <td><b>37.6%</b></td>
+                        <td><b>9.3%</b></td>
+                    
+                    </tr>
+    
+                </table>
+
+
+            </section>
+            <section class="step">
+                <p>
+                    In another simulation where we randomly assign students to first grade classes, the average student is in a class that is 7.2 percentage points away from the grade-wide average for percent economically disadvantaged.
+                </p>
+                <table>
+                    <tr>
+                        <th>Classes</th>
+                        <th>Percent Economic Disadvantaged by Class</th>
+                        <th>Percent Difference Economic Disadvantage</th>
+                    </tr>
+    
+                    <tr>
+                        <td>Class A</td>
+                        <td>33.3%</td>
+                        <td>4.3%</td>
+                    </tr>
+    
+                    <tr>
+                        <td>Class B</td>
+                        <td>25.0%</td>
+                        <td>12.6%</td>
+                    </tr>
+    
+                    <tr>
+                        <td>Class C</td>
+                        <td>38.5%</td>
+                        <td>0.8%</td>
+                    </tr>
+    
+                    <tr>
+                        <td>Class D</td>
+                        <td>37.5%</td>
+                        <td>0.1%</td>
+                    </tr>
+    
+                    <tr>
+                        <td><b>Grade</b></td>
+                        <td><b>37.6%</b></td>
+                        <td><b>7.2%</b></td>
+                    
+                    </tr>
+    
+                </table>
+
+            </section>
+            <section class="step">
+                In total, we ran 500 Monte Carlo simulations to randomly assign the students to the four classes, and the economic segregation index are shown in blue. The actual results for PS 33’s first grade in 2019-20 (shown in orange) are clearly the result of a non-random assignment of students to classes. In the case of PS 33, the school has two G&T classes in first grade.
+            </section>
+            <section class="step">
+                <h3>How common is within-school segregation?</h3>
+                <p>Compared to elementary schools in the rest of the state, NYC elementary schools were more likely to show greater-than-expected within-school segregation. This was true across all categories we measured. 
+                    <br>
+                    <br>
+                    Source: 2018-19 NYSED Data
+                    <br>
+                    <br>
+                    Note: We define greater-than-expected within-school segregation to exist when a school's actual segregation index is three or more standard deviations away from the mean of it's 500 simulated results. 
+                    <br>
+                    <br>
+                    <br>
+                For more information regarding this topic please contact <a href = 'http://margrady.com'>MarGrady Research</a>. 
+                <br>
+                    <br>
+                    <br>
+                </p>
+                <span></span><span></span><span></span>                
+            </section>
+           
+
+        </div>
+        <div id="vis">
+
+        </div>
+    </div>
+
+    
+
+    
+    <script src = 'scroller.js'></script>
+    <script src = 'sections.sam1.js'></script>
+
+</body>
+</html>
