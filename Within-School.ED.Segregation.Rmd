@@ -1,0 +1,333 @@
+
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+library(tidyverse)
+library(psych)
+
+student_data<-read.csv("X:/data2018-19.csv")
+student_data$schoolyear<-"2018-19"
+student_data<-select(student_data, -"ell",-"swd")%>%filter(grade_level %in% c("1", "01", "0K"))
+```
+
+```{r}
+for (i in 2:17){
+  path<-"X:/"
+  if (i<9) {
+    yearbeg <- as.character(i)
+    yearend <-as.character(i+1)
+    filepathnew<-paste0(path,"200",yearbeg,"-0",yearend, "_data.csv")
+    student_data_new<-read.csv(filepathnew)
+    schoolyear<-paste0("200",yearbeg,"-0",yearend)
+    student_data_new$schoolyear<-schoolyear
+    student_data_new<-select(student_data_new, -"LTA_FLG", -"pob_code")%>%filter(grade_level %in% c("1", "01", "0K"))
+    student_data<-rbind(student_data,student_data_new)
+  }
+  else if (i==9){
+    filepathnew<-paste0(path,"200",i,"-data.csv")
+    student_data_new<-read.csv(filepathnew)
+    schoolyear<-paste0("200",i,"-10")
+    student_data_new$schoolyear<-schoolyear
+    student_data_new<-select(student_data_new, -"LTA_FLG",-"pob_code")%>%filter(grade_level %in% c("1", "01", "0K"))
+    student_data<-rbind(student_data,student_data_new)
+  }
+  else if (i<16){
+    yearbeg<-as.character(i)
+    yearend<-as.character(i+1)
+    filepathnew<-paste0(path,"20",yearbeg,"-",yearend,"_data.csv")
+    student_data_new<-read.csv(filepathnew)
+    schoolyear<-paste0("20",yearbeg,"-",yearend)
+    student_data_new$schoolyear<-schoolyear
+    student_data_new<-select(student_data_new, -"LTA_FLG",-"pob_code")%>%filter(grade_level %in% c("1", "01", "0K"))
+    student_data<-rbind(student_data,student_data_new)
+  }
+  else if (i<17){
+    yearbeg<-as.character(i)
+    yearend<-as.character(i+1)
+    filepathnew<-paste0(path,"20",yearbeg,"-",yearend,"_data.csv")
+    student_data_new<-read.csv(filepathnew)
+    schoolyear<-paste0("20",yearbeg,"-",yearend)
+    student_data_new$schoolyear<-schoolyear   
+    student_data_new<-select(student_data_new, -"pob_code")%>%filter(grade_level %in% c("1", "01", "0K"))
+    student_data<-rbind(student_data,student_data_new)
+  }
+    else if (i<18){
+    yearbeg<-as.character(i)
+    yearend<-as.character(i+1)
+    filepathnew<-paste0(path,"20",yearbeg,"-",yearend,"_data.csv")
+    student_data_new<-read.csv(filepathnew)
+    schoolyear<-paste0("20",yearbeg,"-",yearend)
+    student_data_new$schoolyear<-schoolyear   
+    student_data_new<-select(student_data_new, -"pob_code", -"district")%>%filter(grade_level %in% c("1", "01", "0K"))
+    student_data<-rbind(student_data,student_data_new)
+  }
+}
+```
+
+
+
+```{r}
+student_data$grade_level<-as.character(student_data$grade_level)
+
+student_data$grade_level<-paste0("grade_",student_data$grade_level)
+
+student_data$Class.Name<-paste0(student_data$dbn,"_", student_data$grade_level,"_" ,student_data$official_class)
+
+##count the students by grade.
+grade_count <- aggregate(student_id_scram ~ grade_level + dbn +schoolyear,FUN = length, data = student_data)
+colnames(grade_count)[4] <- "grade_size"
+
+##count students by class
+class_count <- aggregate(student_id_scram ~ Class.Name + dbn +schoolyear,FUN = length, data = student_data)
+colnames(class_count)[4] <- "class_size"
+
+
+student_data1<-left_join(student_data,grade_count)
+student_data1<-left_join(student_data1,class_count)
+```
+
+unload the memory
+```{r}
+rm(class_count)
+rm(grade_count)
+rm(student_data_new)
+```
+
+At this point the total goes from 18607446 to 17961498
+
+calculate the grade totals again
+```{r}
+grade_count <- aggregate(student_id_scram ~ grade_level + dbn +schoolyear,FUN = length, data = student_data1)
+colnames(grade_count)[4] <- "grade_size_new"
+student_data1<-left_join(student_data1,grade_count)
+```
+
+```{r}
+#Add Kindergarten filtering here.
+#student_data_01<-student_data1%>%filter(grade_level =="grade_01")
+```
+1,376,010 records
+
+#############
+Moving forward include grade in the group_by code.
+#############
+
+##Calculating Segregation Statistics
+
+Student ED status
+Y=1
+N=0
+```{r}
+##ED
+student_data1 <- student_data1 %>%  group_by(dbn, Class.Name, schoolyear) %>% mutate(class_score = (mean(poverty)))
+
+student_data1 <- student_data1%>%  group_by(dbn, grade_level,schoolyear) %>% mutate(grade_score = (mean(poverty)))
+
+student_data1 <- mutate(student_data1, difference = abs(grade_score - class_score))
+student_data1 <- student_data1 %>%  group_by(dbn,schoolyear, grade_level) %>% mutate(ED_school_g = mean(difference)*100)
+```
+
+CALCULATE AND ADD RACE SCORE
+```{r}
+#dummy code for race
+race_temp <- data.frame(student_data1,dummy.code(student_data1$ethnicity))
+
+# creates temp file with just the columns we need.
+race_temp <- race_temp[,c("student_id_scram","dbn", "schoolyear","ethnicity","grade_level","Class.Name",".","Asian","Black",
+                          "Hispanic","Multi.Racial","Native.American","White")]
+
+#combine . and multiracial into "other"
+race_temp$Other <- race_temp$. + race_temp$Multi.Racial
+
+
+# ASIAN
+race_temp <- race_temp %>%  group_by(dbn, Class.Name,schoolyear) %>% mutate(asian_class = (mean(Asian)*100))
+race_temp <- race_temp %>%  group_by(dbn, grade_level,schoolyear) %>% mutate(asian_grade = (mean(Asian)*100))
+race_temp <- mutate(race_temp, asian_score = abs(asian_grade - asian_class))
+race_temp <- race_temp %>%  group_by(dbn,schoolyear,grade_level) %>% mutate(asian_school_g = mean(asian_score))
+
+# BLACK
+race_temp <- race_temp %>%  group_by(dbn, Class.Name,schoolyear) %>% mutate(black_class = (mean(Black)*100))
+race_temp <- race_temp %>%  group_by(dbn, grade_level,schoolyear) %>% mutate(black_grade = (mean(Black)*100))
+race_temp <- mutate(race_temp, black_score = abs(black_grade - black_class))
+race_temp <- race_temp %>%  group_by(dbn,schoolyear,grade_level) %>% mutate(black_school_g = mean(black_score))
+
+# Hispanic
+race_temp <- race_temp %>%  group_by(dbn, Class.Name,schoolyear) %>% mutate(hispanic_class = (mean(Hispanic)*100))
+race_temp <- race_temp %>%  group_by(dbn, grade_level,schoolyear) %>% mutate(hispanic_grade = (mean(Hispanic)*100))
+race_temp <- mutate(race_temp, hispanic_score = abs(hispanic_grade - hispanic_class))
+race_temp <- race_temp %>%  group_by(dbn,schoolyear,grade_level) %>% mutate(hispanic_school_g = mean(hispanic_score))
+
+# Native
+race_temp <- race_temp %>%  group_by(dbn, Class.Name,schoolyear) %>% mutate(native_class = (mean(Native.American)*100))
+race_temp <- race_temp %>%  group_by(dbn, grade_level,schoolyear) %>% mutate(native_grade = (mean(Native.American)*100))
+race_temp <- mutate(race_temp, native_score = abs(native_grade - native_class))
+race_temp <- race_temp %>%  group_by(dbn,schoolyear,grade_level) %>% mutate(native_school_g = mean(native_score))
+
+# White
+race_temp <- race_temp %>%  group_by(dbn, Class.Name,schoolyear) %>% mutate(white_class = (mean(White)*100))
+race_temp <- race_temp %>%  group_by(dbn, grade_level,schoolyear) %>% mutate(white_grade = (mean(White)*100))
+race_temp <- mutate(race_temp, white_score = abs(white_grade - white_class))
+race_temp <- race_temp %>%  group_by(dbn,schoolyear,grade_level) %>% mutate(white_school_g = mean(white_score))
+
+# Other
+race_temp <- race_temp %>%  group_by(dbn, Class.Name,schoolyear) %>% mutate(other_class = (mean(Other)*100))
+race_temp <- race_temp %>%  group_by(dbn, grade_level,schoolyear) %>% mutate(other_grade = (mean(Other)*100))
+race_temp <- mutate(race_temp, other_score = abs(other_grade - other_class))
+race_temp <- race_temp %>%  group_by(dbn,schoolyear,grade_level) %>% mutate(other_school_g = mean(other_score))
+
+# Calculate School Race Score (from 6 subscores)
+#create temp file with school race scores (6)
+race_temp_school<-race_temp%>%
+  select("dbn","schoolyear","grade_level","asian_school_g","black_school_g","hispanic_school_g","other_school_g","native_school_g","white_school_g")%>%
+  group_by(dbn, schoolyear,grade_level)%>%
+  summarize(asian_school_g = first(asian_school_g),black_school_g = first (black_school_g),                                 hispanic_school_g = first(hispanic_school_g),other_school_g = first(other_school_g),native_school_g = first(native_school_g),white_school_g = first (white_school_g))
+
+
+## combined 6 scores into weighted average at school level.
+
+
+#create class size dataset with separate line for each class at each school
+race_school_count<-student_data1%>%group_by(ethnicity,dbn,schoolyear,grade_level)%>%summarize(total=n())%>%spread(ethnicity,total)
+
+#change NA to be zero.
+race_school_count[is.na(race_school_count)] <- 0
+
+#add "other" column that sums multi-racial and . columns
+race_school_count$Other <- race_school_count$`Multi-Racial` + race_school_count$.
+
+#ADD total column
+race_school_count$total <- race_school_count$Asian + race_school_count$Black + race_school_count$Hispanic + race_school_count$`Native American`+ + race_school_count$White + race_school_count$Other
+
+#create percentage columns
+race_school_count$asian_percent <- race_school_count$Asian / race_school_count$total
+race_school_count$black_percent <- race_school_count$Black / race_school_count$total
+race_school_count$white_percent <- race_school_count$White / race_school_count$total
+race_school_count$hispanic_percent <- race_school_count$Hispanic / race_school_count$total
+race_school_count$other_percent <- race_school_count$Other / race_school_count$total
+race_school_count$native_percent <- race_school_count$`Native American` / race_school_count$total
+
+#add race_school_count to race_temp_school.
+race_temp_school <- race_temp_school %>%
+  left_join(race_school_count, by = c("dbn", "schoolyear","grade_level"))
+
+#add new column with 1 overall race segregation score. Creates weighted average for each school.
+#calculates one race score
+race_temp_school$race_school_g <- race_temp_school$asian_school_g*race_temp_school$asian_percent + race_temp_school$black_school_g*race_temp_school$black_percent + race_temp_school$hispanic_school_g*race_temp_school$hispanic_percent + race_temp_school$native_school_g*race_temp_school$native_percent + race_temp_school$white_school_g*race_temp_school$white_percent + race_temp_school$other_school_g*race_temp_school$other_percent
+
+#creates temp file that has the 7 seg scores we want to merge
+race_temp_school <- race_temp_school [,c("dbn","schoolyear","grade_level","asian_school_g", "black_school_g", "hispanic_school_g", "other_school_g", "native_school_g", "white_school_g", "race_school_g")]
+
+#add columns from race_temp_school to student_data
+student_data1 <- student_data1 %>%
+  left_join(race_temp_school, by = c("dbn", "schoolyear","grade_level"))
+
+#removes extra race calculating variables from environment
+rm("race_school_count")
+rm("race_temp")
+rm("race_temp_school")
+```
+
+
+Setup datasets for simulations
+```{r}
+sim_results <- student_data1[, c("dbn", "schoolyear", "ED_school_g", "grade_level")]
+sim_results$simulation_number <- 0
+sim_results<-unique(sim_results)
+
+sim_student_data <- student_data1%>%select("student_id_scram", "dbn", "schoolyear","poverty", "grade_level", "Class.Name")
+
+# sort sim_student_data by dbn and grade level
+sim_student_data <- sim_student_data[order(sim_student_data$schoolyear, sim_student_data$dbn, sim_student_data$grade_level), ]
+
+# create a row counter (for merging by position later) 
+sim_student_data$row_count <- 1:nrow(sim_student_data)
+
+
+```
+
+##SIMULATIONS
+```{r}
+# set seed so results are replicable
+set.seed(1)
+
+for(trial in 1:3){
+
+# create new data frame to do randomization
+random_temp <- sim_student_data[, c("student_id_scram", "dbn", "schoolyear","grade_level", "poverty")]
+
+# create a random number from a uniform distribution
+random_temp$rand <- sample(1000000000, size = nrow(random_temp), replace = TRUE)
+
+# sort the dataframe random_temp by random number within dbn and grade level
+random_temp <- random_temp[order(random_temp$schoolyear, random_temp$dbn, random_temp$grade_level, random_temp$rand), ]
+
+# create row counter (prior to merging back to original dataset)
+random_temp$row_count <- 1:nrow(random_temp)
+
+# create sim dataframe that will contain the simulated student level data for the calculations
+sim_student_data2 <- sim_student_data[, c("row_count", "Class.Name")]
+
+# merge original classes into the new student list which has been put in a random order within school and grade
+sim_student_data2 <- merge(random_temp, sim_student_data2, by = c("row_count"))
+
+
+###########################################################
+#calculate simulation scores using sim_student_data2
+###########################################################
+
+########## POVERTY ################
+sim_student_data2 <- sim_student_data2 %>%  group_by(dbn, Class.Name, schoolyear) %>% mutate(class_score = (mean(poverty)))
+sim_student_data2 <- sim_student_data2 %>%  group_by(dbn, grade_level, schoolyear) %>% mutate(grade_score = (mean(poverty)))
+sim_student_data2 <- mutate(sim_student_data2, difference = abs(grade_score - class_score))
+sim_student_data2 <- sim_student_data2 %>%  group_by(dbn, schoolyear, grade_level) %>% mutate(ED_school_g = mean(difference)*100)
+
+# create temp file with seg scores
+sim_school_data <- sim_student_data2 %>% group_by(dbn, schoolyear, grade_level) %>% summarize(ED_school_g = first(ED_school_g))
+
+# flag simulation number (0 = actual results)
+sim_school_data$simulation_number <- trial
+
+#bind to bottom of sim_results, using rbind
+sim_results <- rbind(data.frame(sim_results), data.frame(sim_school_data))
+}
+
+```
+
+```{r}
+sim_results <-sim_results[!(sim_results$simulation_number == 0),]
+
+sim_mean <- sim_results %>% group_by(dbn,schoolyear, grade_level) %>% summarise_each(list(mean = mean, sd = sd))
+
+z_scores <- student_data1%>%
+  left_join(sim_mean, by = c("dbn", "schoolyear", "grade_level"))%>%
+  select("dbn","schoolyear", "grade_level","ED_school_g", "ED_school_g_mean", "ED_school_g_sd")%>%
+  group_by(dbn, schoolyear, grade_level)%>%
+  mutate(ED_z = (ED_school_g - ED_school_g_mean)/ED_school_g_sd)%>%
+  group_by(dbn, schoolyear, grade_level)%>%
+  summarize(ED_z = first(ED_z), ED_school_g = first(ED_school_g), ED_school_g_mean = first(ED_school_g_mean), ED_school_g_sd = first(ED_school_g_sd))
+```
+
+```{r}
+#create dataset with separate line for each class at each school
+
+grade_info <-student_data1%>%
+  group_by(dbn,Class.Name,schoolyear,grade_level)%>%
+  summarize(total = n())
+
+#FOR POVERTY CALCULATIONS
+
+ED_info<-student_data1%>%
+  group_by(dbn,Class.Name,schoolyear,grade_level,poverty)%>%
+  summarize(total = n())%>%
+  spread(poverty,total)
+ED_info[is.na(ED_info)] <- 0
+
+#merge poverty_info and grade_info
+ED_info <- grade_info %>%
+  left_join(ED_info, by = c("dbn", "schoolyear", "Class.Name", "grade_level"))
+```
